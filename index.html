@@ -1360,8 +1360,9 @@
       const title = section.querySelector('.section-title');
       const p = section.querySelector('.section-content p');
 
-      // Fade section in from left
+      // Fade section in from left, then scroll it into view
       section.classList.add('reveal');
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
       await delay(550);
 
       // Type section number
@@ -1376,6 +1377,9 @@
       await typeText(p, section._pText, 15);
       await delay(80);
       p.innerHTML = section._pHTML;
+
+      // Re-scroll after text growth to keep section in view
+      section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
       await delay(300);
     }
