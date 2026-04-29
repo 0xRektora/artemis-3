@@ -1258,6 +1258,12 @@
     if (pilotOk && passwordOk) {
       errorMsg.classList.remove('visible');
       welcomeName.textContent = pilot;
+
+      // Start background music
+      const bgm = document.getElementById('bgm');
+      bgm.volume = 0.4;
+      bgm.play().catch(() => {});
+
       terminalScreen.style.transition = 'opacity 0.8s';
       terminalScreen.style.opacity = '0';
       setTimeout(() => {
@@ -1396,6 +1402,8 @@
     setTimeout(runLaunch, 300);
   });
 </script>
+
+<audio id="bgm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop preload="auto"></audio>
 
 </body>
 </html>
