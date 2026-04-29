@@ -1383,6 +1383,13 @@
 
       await delay(300);
     }
+
+    // Scroll to transmission footer after last section
+    const transmission = instructionsScreen.querySelector('.transmission');
+    if (transmission) {
+      await delay(400);
+      transmission.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }
 
   window.addEventListener('load', () => {
