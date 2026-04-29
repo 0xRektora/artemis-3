@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARTEMIS 3 // MISSION CLASSIFIED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #02040a;
+    --bg-mid: #0a0e1f;
+    --bg-light: #1a1f3a;
+    --neon-cyan: #5eead4;
+    --neon-pink: #ff6b9d;
+    --neon-purple: #a78bfa;
+    --neon-orange: #fb923c;
+    --neon-yellow: #fde047;
+    --terminal-green: #4ade80;
+    --text-dim: #9ca3af;
+    --danger: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-deep);
+    font-family: 'Space Mono', monospace;
+    color: var(--neon-cyan);
+  }
+
+  /* === DEEP STARRY SKY === */
+  .sky {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(94, 234, 212, 0.08) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 70%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255, 107, 157, 0.04) 0%, transparent 60%),
+      linear-gradient(180deg, #02040a 0%, #0a0e1f 50%, #050810 100%);
+  }
+
+  /* Nebula cloud effect */
+  .nebula {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(ellipse 600px 300px at 15% 20%, rgba(167, 139, 250, 0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 400px at 85% 60%, rgba(94, 234, 212, 0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 200px at 60% 90%, rgba(255, 107, 157, 0.08) 0%, transparent 70%);
+    filter: blur(20px);
+    opacity: 0.8;
+  }
+
+  /* Star canvas */
+  #stars-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Atmospheric layers */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%);
+  }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.12),
+      rgba(0, 0, 0, 0.12) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  /* === LAUNCH SCREEN === */
+  #launch-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .launch-status {
+    font-family: 'VT323', monospace;
+    color: var(--terminal-green);
+    font-size: 1.5rem;
+    text-align: center;
+    text-shadow: 0 0 8px var(--terminal-green);
+    margin-bottom: 2rem;
+    letter-spacing: 2px;
+    min-height: 1.5em;
+    z-index: 5;
+  }
+
+  .launch-status .blink { animation: blink 0.8s steps(2) infinite; }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .rocket-stage {
+    position: relative;
+    width: 300px;
+    height: 450px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  /* === REALISTIC ROCKET === */
+  .rocket {
+    position: relative;
+    width: 100px;
+    margin-bottom: 30px;
+    transition: transform 0.1s;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+  }
+
+  .rocket svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Engine flame */
+  .flame-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -10px;
+    width: 40px;
+    height: 0;
+    transition: height 0.3s;
+    pointer-events: none;
+  }
+
+  .flame-outer {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 36px;
+    height: 100%;
+    background: linear-gradient(to bottom,
+      var(--neon-orange) 0%,
+      #f97316 30%,
+      var(--neon-pink) 70%,
+      transparent 100%);
+    clip-path: polygon(15% 0, 85% 0, 100% 50%, 50% 100%, 0 50%);
+    filter: blur(2px);
+    animation: flameFlicker 0.1s infinite alternate;
+  }
+
+  .flame-inner {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 5px;
+    width: 18px;
+    height: 80%;
+    background: linear-gradient(to bottom,
+      #fff 0%,
+      var(--neon-yellow) 40%,
+      var(--neon-orange) 80%,
+      transparent 100%);
+    clip-path: polygon(20% 0, 80% 0, 100% 60%, 50% 100%, 0 60%);
+    animation: flameFlicker 0.08s infinite alternate-reverse;
+  }
+
+  @keyframes flameFlicker {
+    from { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: 0.95; }
+    to { transform: translateX(-50%) scaleY(1.05) scaleX(0.95); opacity: 1; }
+  }
+
+  /* Smoke */
+  .smoke {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -40px;
+    width: 200px;
+    height: 100px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .smoke-puff {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: rgba(180, 180, 200, 0.5);
+    border-radius: 50%;
+    filter: blur(3px);
+    animation: smokeRise 1.5s ease-out forwards;
+  }
+
+  @keyframes smokeRise {
+    0% { opacity: 0.7; transform: translate(0, 0) scale(0.5); }
+    100% { opacity: 0; transform: translate(var(--tx, 0), 60px) scale(3); }
+  }
+
+  /* Launch animations */
+  .rocket.shaking { animation: shake 0.05s linear infinite; }
+
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-1px, 1px); }
+    50% { transform: translate(1px, -1px); }
+    75% { transform: translate(-1px, -1px); }
+  }
+
+  .rocket.launching {
+    animation: launch 3s cubic-bezier(0.6, 0.02, 0.95, 0.5) forwards;
+  }
+
+  @keyframes launch {
+    0% { transform: translateY(0); }
+    15% { transform: translateY(-30px); }
+    100% { transform: translateY(-150vh); }
+  }
+
+  /* Launch pad */
+  .launch-pad {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 12px;
+    background: linear-gradient(to bottom, #4b5563 0%, #374151 50%, #1f2937 100%);
+    border-top: 2px solid #6b7280;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  }
+
+  .launch-pad::before, .launch-pad::after {
+    content: '';
+    position: absolute;
+    top: -24px;
+    width: 8px;
+    height: 24px;
+    background: linear-gradient(to right, #374151, #6b7280, #374151);
+  }
+
+  .launch-pad::before { left: 14px; }
+  .launch-pad::after { right: 14px; }
+
+  .pad-glow {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    height: 60px;
+    background: radial-gradient(ellipse at center bottom,
+      var(--neon-orange) 0%,
+      rgba(251, 146, 60, 0.4) 30%,
+      transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .pad-glow.active {
+    opacity: 1;
+    animation: glowPulse 0.15s infinite alternate;
+  }
+
+  @keyframes glowPulse {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
+  }
+
+  /* === TERMINAL SCREEN === */
+  #terminal-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 1s ease-in;
+  }
+
+  #terminal-screen.visible { display: flex; opacity: 1; }
+
+  .terminal {
+    background: rgba(2, 4, 10, 0.92);
+    border: 2px solid var(--neon-cyan);
+    box-shadow:
+      0 0 30px rgba(94, 234, 212, 0.3),
+      inset 0 0 30px rgba(94, 234, 212, 0.05);
+    padding: 2.5rem;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    backdrop-filter: blur(4px);
+  }
+
+  .terminal::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, var(--neon-cyan), var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+    background-size: 400% 400%;
+    z-index: -1;
+    animation: borderGlow 8s ease infinite;
+    opacity: 0.4;
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--neon-cyan);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.625rem;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+  }
+
+  .terminal-dots { display: flex; gap: 6px; }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .terminal-dot.red { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
+  .terminal-dot.yellow { background: var(--neon-yellow); box-shadow: 0 0 4px var(--neon-yellow); }
+  .terminal-dot.green { background: var(--terminal-green); box-shadow: 0 0 4px var(--terminal-green); }
+
+  .terminal-title { color: var(--neon-pink); }
+
+  .mission-badge {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .mission-badge .label {
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+  }
+
+  .mission-badge .name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 2.25rem;
+    color: var(--neon-pink);
+    letter-spacing: 4px;
+    margin-top: 0.5rem;
+    text-shadow:
+      0 0 10px var(--neon-pink),
+      2px 2px 0 var(--neon-purple);
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.6; }
+    94% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+  }
+
+  .prompt {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    color: var(--terminal-green);
+    text-shadow: 0 0 4px var(--terminal-green);
+    margin-bottom: 1.5rem;
+    min-height: 4rem;
+  }
+
+  .prompt .cursor {
+    display: inline-block;
+    width: 12px;
+    height: 1.2rem;
+    background: var(--terminal-green);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 0.8s steps(2) infinite;
+  }
+
+  .input-group { margin-bottom: 1rem; }
+
+  .input-label {
+    display: block;
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--neon-purple);
+    letter-spacing: 2px;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .input-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--neon-cyan);
+    padding: 0.75rem 1rem;
+  }
+
+  .input-area .arrow {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--neon-pink);
+  }
+
+  .terminal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--neon-cyan);
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .terminal-input::placeholder {
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: transparent;
+    border: 2px solid var(--neon-pink);
+    color: var(--neon-pink);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    padding: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--neon-pink);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  .submit-btn:hover::before { transform: translateX(0); }
+
+  .submit-btn:hover {
+    color: var(--bg-deep);
+    box-shadow: 0 0 20px var(--neon-pink);
+  }
+
+  .submit-btn:active { transform: translate(2px, 2px); }
+
+  .error-msg {
+    color: var(--danger);
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    text-align: center;
+    margin-top: 0.75rem;
+    text-shadow: 0 0 4px var(--danger);
+    min-height: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .error-msg.visible {
+    opacity: 1;
+    animation: errorShake 0.4s;
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .hint {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* === INSTRUCTIONS SCREEN === */
+  #instructions-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    opacity: 0;
+    transition: opacity 1s ease-in;
+    overflow-y: auto;
+  }
+
+  #instructions-screen.visible { display: flex; opacity: 1; }
+
+  .instructions-content {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .access-granted {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.5rem;
+    color: var(--terminal-green);
+    text-shadow: 0 0 12px var(--terminal-green);
+    letter-spacing: 4px;
+    margin-bottom: 1rem;
+    animation: flicker 4s infinite;
+  }
+
+  .welcome-pilot {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--neon-cyan);
+    margin-bottom: 2rem;
+    letter-spacing: 2px;
+  }
+
+  .welcome-pilot .pilot-name {
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink);
+    text-transform: uppercase;
+  }
+
+  .placeholder-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--neon-cyan);
+    line-height: 1.6;
+    background: rgba(2, 4, 10, 0.8);
+    border: 2px dashed var(--neon-cyan);
+    padding: 2rem;
+    text-align: left;
+  }
+
+  /* === MISSION BRIEFING === */
+  .briefing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--neon-cyan);
+    border-bottom: 1px solid var(--neon-cyan);
+  }
+
+  .briefing-tag {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: var(--danger);
+    letter-spacing: 1px;
+    text-shadow: 0 0 4px var(--danger);
+    white-space: nowrap;
+  }
+
+  .briefing-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.875rem;
+    color: var(--neon-cyan);
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px var(--neon-cyan);
+    text-align: center;
+    flex: 1;
+  }
+
+  .coords-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .coord-cell {
+    background: rgba(94, 234, 212, 0.05);
+    border: 1px solid var(--neon-cyan);
+    padding: 1rem;
+    text-align: left;
+    position: relative;
+  }
+
+  .coord-cell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid var(--neon-pink);
+    border-left: 2px solid var(--neon-pink);
+  }
+
+  .coord-cell::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 8px;
+    height: 8px;
+    border-bottom: 2px solid var(--neon-pink);
+    border-right: 2px solid var(--neon-pink);
+  }
+
+  .coord-label {
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    color: var(--neon-purple);
+    letter-spacing: 2px;
+    margin-bottom: 0.4rem;
+  }
+
+  .coord-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.95rem;
+    color: var(--neon-yellow);
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px var(--neon-yellow);
+    margin-bottom: 0.3rem;
+  }
+
+  .coord-sub {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .section {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+    padding: 1rem;
+    background: rgba(2, 4, 10, 0.5);
+    border-left: 3px solid var(--neon-pink);
+    transition: all 0.3s;
+  }
+
+  .section:hover {
+    background: rgba(94, 234, 212, 0.05);
+    border-left-color: var(--neon-cyan);
+    transform: translateX(4px);
+  }
+
+  .section-num {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.5rem;
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink);
+    line-height: 1;
+  }
+
+  .section-content {
+    flex: 1;
+  }
+
+  .section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    color: var(--neon-cyan);
+    letter-spacing: 1.5px;
+    margin-bottom: 0.6rem;
+    text-shadow: 0 0 4px var(--neon-cyan);
+  }
+
+  .section-content p {
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: #d1d5db;
+    letter-spacing: 0.5px;
+  }
+
+  .highlight {
+    display: inline-block;
+    color: var(--bg-deep);
+    background: var(--neon-yellow);
+    padding: 0.05em 0.5em;
+    margin: 0 0.1em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.95em;
+    box-shadow:
+      0 0 12px rgba(253, 224, 71, 0.6),
+      2px 2px 0 var(--neon-pink);
+    position: relative;
+    transform: skew(-4deg);
+  }
+
+  .highlight::before {
+    content: '[';
+    color: var(--bg-deep);
+    margin-right: 2px;
+    font-weight: bold;
+  }
+
+  .highlight::after {
+    content: ']';
+    color: var(--bg-deep);
+    margin-left: 2px;
+    font-weight: bold;
+  }
+
+  .transmission {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--neon-cyan);
+    text-align: left;
+  }
+
+  .transmission-line {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: var(--terminal-green);
+    text-shadow: 0 0 4px var(--terminal-green);
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 10px;
+    background: var(--terminal-green);
+    animation: blink 0.8s steps(2) infinite;
+    margin-left: 2px;
+    color: var(--terminal-green);
+  }
+
+  /* Make instructions screen scrollable on smaller heights */
+  #instructions-screen.visible {
+    align-items: flex-start;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 640px) {
+    .mission-badge .name { font-size: 1.5rem; letter-spacing: 2px; }
+    .mission-badge .label { font-size: 1rem; }
+    .prompt { font-size: 1.125rem; }
+    .terminal { padding: 1.5rem; }
+    .access-granted { font-size: 1rem; }
+    .rocket-stage { width: 240px; }
+    .rocket { width: 80px; }
+    .briefing-title { font-size: 0.7rem; }
+    .briefing-tag { font-size: 0.45rem; }
+    .coords-grid { grid-template-columns: 1fr; }
+    .section { grid-template-columns: 40px 1fr; padding: 0.75rem; }
+    .section-num { font-size: 1.1rem; }
+    .section-title { font-size: 0.6rem; }
+    .section-content p { font-size: 1.1rem; }
+    .coord-value { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky"></div>
+<div class="nebula"></div>
+<canvas id="stars-canvas"></canvas>
+<div class="vignette"></div>
+<div class="scanlines"></div>
+
+<div id="launch-screen">
+  <div class="launch-status" id="launch-status">> INITIALISATION SYSTEME<span class="blink">_</span></div>
+  <div class="rocket-stage">
+    <div class="pad-glow" id="pad-glow"></div>
+    <div class="rocket" id="rocket">
+      <svg viewBox="0 0 100 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#9ca3af"/>
+            <stop offset="20%" stop-color="#e5e7eb"/>
+            <stop offset="50%" stop-color="#f9fafb"/>
+            <stop offset="80%" stop-color="#d1d5db"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+          <linearGradient id="noseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7f1d1d"/>
+            <stop offset="40%" stop-color="#dc2626"/>
+            <stop offset="70%" stop-color="#ef4444"/>
+            <stop offset="100%" stop-color="#7f1d1d"/>
+          </linearGradient>
+          <linearGradient id="engineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#374151"/>
+            <stop offset="50%" stop-color="#6b7280"/>
+            <stop offset="100%" stop-color="#1f2937"/>
+          </linearGradient>
+          <radialGradient id="windowGrad" cx="40%" cy="40%">
+            <stop offset="0%" stop-color="#a5f3fc"/>
+            <stop offset="60%" stop-color="#0891b2"/>
+            <stop offset="100%" stop-color="#164e63"/>
+          </radialGradient>
+          <linearGradient id="finGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7f1d1d"/>
+            <stop offset="50%" stop-color="#dc2626"/>
+            <stop offset="100%" stop-color="#7f1d1d"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Fins -->
+        <path d="M 30 175 L 10 215 L 30 215 Z" fill="url(#finGrad)" stroke="#450a0a" stroke-width="0.8"/>
+        <path d="M 70 175 L 90 215 L 70 215 Z" fill="url(#finGrad)" stroke="#450a0a" stroke-width="0.8"/>
+
+        <!-- Body -->
+        <rect x="32" y="50" width="36" height="160" fill="url(#bodyGrad)" stroke="#4b5563" stroke-width="0.5"/>
+
+        <!-- Panel lines -->
+        <line x1="32" y1="80" x2="68" y2="80" stroke="#6b7280" stroke-width="0.4" opacity="0.6"/>
+        <line x1="32" y1="140" x2="68" y2="140" stroke="#6b7280" stroke-width="0.4" opacity="0.6"/>
+        <line x1="32" y1="180" x2="68" y2="180" stroke="#6b7280" stroke-width="0.4" opacity="0.6"/>
+
+        <!-- Red stripes -->
+        <rect x="32" y="155" width="36" height="2" fill="#dc2626"/>
+        <rect x="32" y="160" width="36" height="2" fill="#dc2626"/>
+
+        <!-- Mission insignia -->
+        <circle cx="50" cy="120" r="8" fill="#1e3a8a" stroke="#fde047" stroke-width="0.8"/>
+        <text x="50" y="123" text-anchor="middle" font-family="monospace" font-size="6" font-weight="bold" fill="#fde047">A3</text>
+
+        <!-- Window -->
+        <circle cx="50" cy="85" r="7" fill="url(#windowGrad)" stroke="#374151" stroke-width="1.5"/>
+        <circle cx="48" cy="83" r="2" fill="#fff" opacity="0.7"/>
+
+        <!-- Nose cone -->
+        <path d="M 32 50 Q 32 25 50 5 Q 68 25 68 50 Z" fill="url(#noseGrad)" stroke="#450a0a" stroke-width="0.6"/>
+        <path d="M 50 5 Q 60 20 60 40" fill="none" stroke="#fca5a5" stroke-width="0.8" opacity="0.5"/>
+
+        <!-- Engine nozzle -->
+        <path d="M 32 210 L 28 230 L 72 230 L 68 210 Z" fill="url(#engineGrad)" stroke="#111827" stroke-width="0.8"/>
+        <path d="M 34 212 L 30 228 L 70 228 L 66 212 Z" fill="#111827" opacity="0.6"/>
+
+        <!-- Shading -->
+        <rect x="32" y="50" width="4" height="160" fill="rgba(0,0,0,0.25)"/>
+        <rect x="46" y="50" width="3" height="160" fill="rgba(255,255,255,0.4)"/>
+      </svg>
+
+      <div class="flame-container" id="flame">
+        <div class="flame-outer"></div>
+        <div class="flame-inner"></div>
+      </div>
+      <div class="smoke" id="smoke"></div>
+    </div>
+    <div class="launch-pad"></div>
+  </div>
+</div>
+
+<div id="terminal-screen">
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dots">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+      </div>
+      <div class="terminal-title">/// CONTROL_PANEL ///</div>
+      <div>v3.2026</div>
+    </div>
+
+    <div class="mission-badge">
+      <div class="label">MISSION</div>
+      <div class="name">ARTEMIS 3</div>
+    </div>
+
+    <div class="prompt" id="prompt-text"></div>
+
+    <div class="input-group">
+      <label class="input-label">// IDENTIFIANT PILOTE</label>
+      <div class="input-area">
+        <span class="arrow">></span>
+        <input type="text" class="terminal-input" id="pilot-name" placeholder="VOTRE NOM" autocomplete="off" spellcheck="false"/>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">// CODE DE MISSION</label>
+      <div class="input-area">
+        <span class="arrow">></span>
+        <input type="text" class="terminal-input" id="password" placeholder="NOM DE LA MISSION" autocomplete="off" spellcheck="false"/>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn">[ AUTHENTIFIER ]</button>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="hint">// ACCES RESTREINT AUX EQUIPAGES AUTORISES //</div>
+  </div>
+</div>
+
+<div id="instructions-screen">
+  <div class="instructions-content">
+    <div class="access-granted">// ACCES AUTORISE //</div>
+    <div class="welcome-pilot">
+      Bienvenue, Pilote <span class="pilot-name" id="welcome-name">PILOTE</span>
+    </div>
+
+    <div class="briefing-header">
+      <span class="briefing-tag">[ CLASSIFIE ]</span>
+      <h2 class="briefing-title">DOSSIER DE MISSION</h2>
+      <span class="briefing-tag">[ NIVEAU 3 ]</span>
+    </div>
+
+    <!-- Coordinates -->
+    <div class="coords-grid">
+      <div class="coord-cell">
+        <div class="coord-label">// DATE DE LANCEMENT</div>
+        <div class="coord-value">01.05.2026</div>
+        <div class="coord-sub">T-MINUS 16:30</div>
+      </div>
+      <div class="coord-cell">
+        <div class="coord-label">// COORDONNEES</div>
+        <div class="coord-value">FUSEE A-3</div>
+        <div class="coord-sub">QUAI D'EMBARQUEMENT</div>
+      </div>
+    </div>
+
+    <!-- Briefing sections -->
+    <div class="section">
+      <div class="section-num">01</div>
+      <div class="section-content">
+        <div class="section-title">PROTOCOLE DE LANCEMENT</div>
+        <p>Soyez prêts pour le décollage. La réussite de la mission dépend en grande partie d'un facteur critique : <span class="highlight">le carburant</span>. Assurez-vous d'avoir fait le plein avant l'embarquement — un réservoir vide compromet l'ensemble de l'opération.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">02</div>
+      <div class="section-content">
+        <div class="section-title">RAVITAILLEMENT EN VOL</div>
+        <p>Des <span class="highlight">amuse-bouches</span> doivent rester à portée de main durant tout le vol. Quitter son poste pour se ravitailler est fortement déconseillé — votre présence aux commandes est requise en permanence.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">03</div>
+      <div class="section-content">
+        <div class="section-title">PAUSE OPERATIONNELLE</div>
+        <p>Le <span class="highlight">pilote automatique</span> pourra être activé pour permettre à l'équipage d'effectuer le souper. Les communications resteront ouvertes durant cette phase si besoin de coordination.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">04</div>
+      <div class="section-content">
+        <div class="section-title">EQUIPEMENT DE SOUTIEN</div>
+        <p>Prévoyez de la <span class="highlight">caféine</span> en quantité suffisante. La mission s'annonce longue et exigeante — les longues heures dans le cockpit ne pardonnent pas.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">05</div>
+      <div class="section-content">
+        <div class="section-title">PROTOCOLE ANTI-ALLERGENES</div>
+        <p>Bien que dans l'espace personne ne vous entende éternuer, l'air ambiant du vaisseau peut s'avérer impitoyable. Prévoyez des <span class="highlight">Réactine</span> pour respirer librement — la pression atmosphérique sera déjà suffisamment lourde sans ça.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">06</div>
+      <div class="section-content">
+        <div class="section-title">FEUILLE DE ROUTE LUDIQUE</div>
+        <p>Une liste exhaustive d'<span class="highlight">objectifs de jeu</span> nous attend, incluant plusieurs nouveautés. La séquence de mission sera établie en début de soirée — l'équipage devra s'engager à respecter le plan de vol convenu.</p>
+      </div>
+    </div>
+
+    <!-- Footer transmission -->
+    <div class="transmission">
+      <div class="transmission-line">> FIN DE TRANSMISSION</div>
+      <div class="transmission-line">> BONNE CHANCE, PILOTES</div>
+      <div class="transmission-line">> AD ASTRA<span class="cursor-blink">_</span></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // === STARFIELD ===
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+
+  let stars = [];
+  let shootingStars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    generateStars();
+  }
+
+  function generateStars() {
+    stars = [];
+    const density = (canvas.width * canvas.height) / 4000;
+    const starCount = Math.min(400, Math.floor(density));
+    const colors = ['#ffffff', '#fef9c3', '#dbeafe', '#fce7f3', '#a5f3fc', '#fde047'];
+
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() < 0.85 ? Math.random() * 1 + 0.3 : Math.random() * 1.8 + 1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        twinkleSpeed: Math.random() * 0.02 + 0.005,
+        twinklePhase: Math.random() * Math.PI * 2,
+        baseAlpha: Math.random() * 0.5 + 0.5
+      });
+    }
+  }
+
+  function maybeAddShootingStar() {
+    if (Math.random() < 0.003 && shootingStars.length < 2) {
+      shootingStars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.5,
+        len: Math.random() * 80 + 40,
+        speed: Math.random() * 8 + 6,
+        angle: Math.PI / 4 + (Math.random() * 0.3 - 0.15),
+        alpha: 1
+      });
+    }
+  }
+
+  function drawStars(time) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const s of stars) {
+      const twinkle = Math.sin(time * s.twinkleSpeed + s.twinklePhase) * 0.3 + 0.7;
+      const alpha = s.baseAlpha * twinkle;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (s.radius > 1.2) {
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const ss = shootingStars[i];
+      const dx = Math.cos(ss.angle) * ss.len;
+      const dy = Math.sin(ss.angle) * ss.len;
+      const grad = ctx.createLinearGradient(ss.x, ss.y, ss.x - dx, ss.y - dy);
+      grad.addColorStop(0, `rgba(255, 255, 255, ${ss.alpha})`);
+      grad.addColorStop(0.4, `rgba(165, 243, 252, ${ss.alpha * 0.6})`);
+      grad.addColorStop(1, 'rgba(165, 243, 252, 0)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ss.x, ss.y);
+      ctx.lineTo(ss.x - dx, ss.y - dy);
+      ctx.stroke();
+
+      ss.x += Math.cos(ss.angle) * ss.speed;
+      ss.y += Math.sin(ss.angle) * ss.speed;
+      ss.alpha -= 0.015;
+
+      if (ss.alpha <= 0 || ss.x > canvas.width || ss.y > canvas.height) {
+        shootingStars.splice(i, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function animateStars(time) {
+    maybeAddShootingStar();
+    drawStars(time);
+    requestAnimationFrame(animateStars);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(animateStars);
+
+  // === LAUNCH SEQUENCE ===
+  const launchStatus = document.getElementById('launch-status');
+  const rocket = document.getElementById('rocket');
+  const flame = document.getElementById('flame');
+  const smoke = document.getElementById('smoke');
+  const padGlow = document.getElementById('pad-glow');
+  const launchScreen = document.getElementById('launch-screen');
+  const terminalScreen = document.getElementById('terminal-screen');
+
+  const statusMessages = [
+    '> INITIALISATION SYSTEME',
+    '> CARBURANT: OK',
+    '> MOTEURS: OK',
+    '> DECOLLAGE IMMINENT',
+    '> 3... 2... 1...',
+    '> LIFTOFF !'
+  ];
+
+  let statusIndex = 0;
+
+  function updateStatus() {
+    if (statusIndex < statusMessages.length) {
+      launchStatus.innerHTML = statusMessages[statusIndex] + '<span class="blink">_</span>';
+      statusIndex++;
+    }
+  }
+
+  function generateSmoke() {
+    for (let i = 0; i < 8; i++) {
+      const puff = document.createElement('div');
+      puff.className = 'smoke-puff';
+      puff.style.left = (Math.random() * 160 + 20) + 'px';
+      puff.style.setProperty('--tx', (Math.random() * 100 - 50) + 'px');
+      puff.style.animationDelay = (Math.random() * 0.3) + 's';
+      smoke.appendChild(puff);
+      setTimeout(() => puff.remove(), 1600);
+    }
+  }
+
+  function runLaunch() {
+    setTimeout(updateStatus, 100);
+    setTimeout(updateStatus, 500);
+    setTimeout(updateStatus, 1000);
+    setTimeout(updateStatus, 1500);
+
+    setTimeout(() => {
+      rocket.classList.add('shaking');
+      flame.style.height = '70px';
+      smoke.style.opacity = '1';
+      padGlow.classList.add('active');
+      generateSmoke();
+    }, 2000);
+
+    setTimeout(updateStatus, 2000);
+
+    setTimeout(() => {
+      updateStatus();
+      rocket.classList.remove('shaking');
+      rocket.classList.add('launching');
+      flame.style.height = '140px';
+      const smokeInterval = setInterval(generateSmoke, 100);
+      setTimeout(() => {
+        clearInterval(smokeInterval);
+        padGlow.classList.remove('active');
+      }, 1500);
+    }, 2800);
+
+    setTimeout(() => {
+      launchScreen.style.transition = 'opacity 0.6s';
+      launchScreen.style.opacity = '0';
+      setTimeout(() => {
+        launchScreen.style.display = 'none';
+        terminalScreen.classList.add('visible');
+        startTypewriter();
+      }, 600);
+    }, 4200);
+  }
+
+  // === TYPEWRITER ===
+  const promptEl = document.getElementById('prompt-text');
+  const promptText = "> CONNEXION ETABLIE...\n> INDIQUEZ LE NOM DE LA MISSION POUR ACCEDER AUX CONSIGNES";
+
+  function startTypewriter() {
+    let i = 0;
+    promptEl.innerHTML = '';
+    const interval = setInterval(() => {
+      if (i < promptText.length) {
+        const char = promptText[i];
+        promptEl.innerHTML += (char === '\n') ? '<br>' : char;
+        i++;
+      } else {
+        clearInterval(interval);
+        promptEl.innerHTML += '<span class="cursor"></span>';
+        document.getElementById('pilot-name').focus();
+      }
+    }, 30);
+  }
+
+  // === AUTHENTICATION ===
+  const submitBtn = document.getElementById('submit-btn');
+  const pilotInput = document.getElementById('pilot-name');
+  const passwordInput = document.getElementById('password');
+  const errorMsg = document.getElementById('error-msg');
+  const instructionsScreen = document.getElementById('instructions-screen');
+  const welcomeName = document.getElementById('welcome-name');
+
+  const AUTHORIZED_PILOTS = ['MENDI', 'SHAMY'];
+  const MISSION_PASSWORD = 'ARTEMIS3';
+
+  function normalize(input) {
+    return input.toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9]/g, '');
+  }
+
+  function authenticate() {
+    const pilot = normalize(pilotInput.value);
+    const password = normalize(passwordInput.value);
+
+    const pilotOk = AUTHORIZED_PILOTS.includes(pilot);
+    const passwordOk = password === MISSION_PASSWORD;
+
+    if (pilotOk && passwordOk) {
+      errorMsg.classList.remove('visible');
+      welcomeName.textContent = pilot;
+      terminalScreen.style.transition = 'opacity 0.8s';
+      terminalScreen.style.opacity = '0';
+      setTimeout(() => {
+        terminalScreen.style.display = 'none';
+        instructionsScreen.classList.add('visible');
+      }, 800);
+    } else if (!pilotOk && !passwordOk) {
+      showError('! IDENTIFIANT ET CODE INVALIDES !');
+    } else if (!pilotOk) {
+      showError('! PILOTE NON AUTORISE !');
+    } else {
+      showError('! CODE DE MISSION ERRONE !');
+    }
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('visible');
+    passwordInput.value = '';
+    setTimeout(() => errorMsg.classList.remove('visible'), 2500);
+  }
+
+  submitBtn.addEventListener('click', authenticate);
+  pilotInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') passwordInput.focus();
+  });
+  passwordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') authenticate();
+  });
+
+  window.addEventListener('load', () => {
+    setTimeout(runLaunch, 300);
+  });
+</script>
+
+</body>
+</html>
