@@ -957,7 +957,7 @@
       <div class="coord-cell">
         <div class="coord-label">// DATE DE LANCEMENT</div>
         <div class="coord-value">01.05.2026</div>
-        <div class="coord-sub">T-MINUS 16:30</div>
+        <div class="coord-sub" id="tminus">T-MINUS --:--:--</div>
       </div>
       <div class="coord-cell">
         <div class="coord-label">// COORDONNEES</div>
@@ -1280,6 +1280,37 @@
   passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') authenticate();
   });
+
+  // === T-MINUS COUNTDOWN ===
+  const launchDate = new Date(2026, 4, 1, 16, 30, 0); // May 1, 2026 16:30 local
+  const tminusEl = document.getElementById('tminus');
+
+  function updateTMinus() {
+    const now = new Date();
+    let diff = launchDate - now;
+
+    if (diff <= 0) {
+      tminusEl.textContent = 'T-MINUS 0-00:00:00 // LANCEMENT !';
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    diff -= days * 1000 * 60 * 60 * 24;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    diff -= hours * 1000 * 60 * 60;
+    const minutes = Math.floor(diff / (1000 * 60));
+    diff -= minutes * 1000 * 60;
+    const seconds = Math.floor(diff / 1000);
+
+    const hh = String(hours).padStart(2, '0');
+    const mm = String(minutes).padStart(2, '0');
+    const ss = String(seconds).padStart(2, '0');
+
+    tminusEl.textContent = `T-MINUS ${days}-${hh}:${mm}:${ss}`;
+  }
+
+  updateTMinus();
+  setInterval(updateTMinus, 1000);
 
   window.addEventListener('load', () => {
     setTimeout(runLaunch, 300);
