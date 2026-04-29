@@ -682,7 +682,14 @@
     padding: 1rem;
     background: rgba(2, 4, 10, 0.5);
     border-left: 3px solid var(--neon-pink);
-    transition: all 0.3s;
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out, background 0.3s, border-left-color 0.3s;
+  }
+
+  .section.reveal {
+    opacity: 1;
+    transform: translateX(0);
   }
 
   .section:hover {
@@ -1256,6 +1263,7 @@
       setTimeout(() => {
         terminalScreen.style.display = 'none';
         instructionsScreen.classList.add('visible');
+        animateSections();
       }, 800);
     } else if (!pilotOk && !passwordOk) {
       showError('! IDENTIFIANT ET CODE INVALIDES !');
@@ -1311,6 +1319,67 @@
 
   updateTMinus();
   setInterval(updateTMinus, 1000);
+
+  // === SECTION REVEAL + TYPEWRITER ===
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function typeText(element, text, speed) {
+    element.textContent = '';
+    for (let i = 0; i < text.length; i++) {
+      element.textContent += text[i];
+      await delay(speed);
+    }
+  }
+
+  async function animateSections() {
+    const sections = instructionsScreen.querySelectorAll('.section');
+
+    // Store original content and clear section body text
+    for (const section of sections) {
+      const num = section.querySelector('.section-num');
+      const title = section.querySelector('.section-title');
+      const p = section.querySelector('.section-content p');
+
+      section._numText = num.textContent;
+      section._titleText = title.textContent;
+      section._pHTML = p.innerHTML;   // preserve highlights
+      section._pText = p.textContent;
+
+      num.textContent = '';
+      title.textContent = '';
+      p.textContent = '';
+    }
+
+    // Wait for instructions screen fade-in
+    await delay(800);
+
+    for (const section of sections) {
+      const num = section.querySelector('.section-num');
+      const title = section.querySelector('.section-title');
+      const p = section.querySelector('.section-content p');
+
+      // Fade section in from left
+      section.classList.add('reveal');
+      await delay(550);
+
+      // Type section number
+      await typeText(num, section._numText, 120);
+      await delay(100);
+
+      // Type title
+      await typeText(title, section._titleText, 55);
+      await delay(100);
+
+      // Type paragraph text then restore highlights
+      await typeText(p, section._pText, 15);
+      await delay(80);
+      p.innerHTML = section._pHTML;
+
+      await delay(300);
+    }
+  }
 
   window.addEventListener('load', () => {
     setTimeout(runLaunch, 300);
